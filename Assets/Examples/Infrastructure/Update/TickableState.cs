@@ -11,7 +11,8 @@ namespace Examples.Infrastructure.Update
         public override async UniTask<StateTransitionInfo> Execute(CancellationToken token)
         {
             _stateTransitionInfo = null;
-            await UniTask.WaitUntil(() => _stateTransitionInfo != null);
+            await UniTask.WaitUntil(() => _stateTransitionInfo != null).AttachExternalCancellation(token);
+            if (token.IsCancellationRequested) return null;
             return _stateTransitionInfo;
         }
 
