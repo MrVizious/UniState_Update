@@ -13,6 +13,7 @@ namespace UniState
         protected virtual int MaxHistorySize => 15;
 
         private bool _isExecuting = false;
+        private StateWithMetadata _activeStateMetadata;
 
         public virtual void SetResolver(ITypeResolver resolver)
         {
@@ -30,6 +31,12 @@ namespace UniState
             await ExecuteInternal(_transitionFactory.CreateStateTransition<TState, TPayload>(payload), token);
         }
 
+        public virtual void Tick(float deltaTime)
+        {
+            // Call Tick on the currently active state, if any
+            _activeStateMetadata?.State?.Tick(deltaTime);
+        }
+
         protected virtual void HandleError(StateMachineErrorData errorData)
         {
         }
@@ -41,6 +48,7 @@ namespace UniState
         {
             _history = new LimitedStack<StateTransitionInfo>(MaxHistorySize);
             _isExecuting = true;
+            _activeStateMetadata = null;
         }
 
         private async UniTask ExecuteInternal(StateTransitionInfo initialTransition, CancellationToken token)
@@ -56,6 +64,8 @@ namespace UniState
             var nextStateMetadata = new StateWithMetadata();
 
             activeStateMetadata.BuildState(initialTransition, initialTransition.StateBehaviourData);
+
+            _activeStateMetadata = activeStateMetadata; // <-- Track the active state
 
             try
             {
@@ -79,6 +89,7 @@ namespace UniState
                     }
 
                     activeStateMetadata.CopyData(nextStateMetadata);
+                    _activeStateMetadata = activeStateMetadata; // <-- Update active state
 
                     transitionInfo = await ExecuteSafe(activeStateMetadata.State, token);
 
@@ -87,6 +98,7 @@ namespace UniState
 
                 await ExitAndDisposeSafe(activeStateMetadata.State, token);
                 activeStateMetadata.Clear();
+                _activeStateMetadata = null; // <-- Clear when done
             }
             catch (OperationCanceledException)
             {
@@ -105,6 +117,7 @@ namespace UniState
                 activeStateMetadata.Clear();
 
                 _isExecuting = false;
+                _activeStateMetadata = null; // <-- Clear when done
             }
         }
 

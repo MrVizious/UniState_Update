@@ -9,5 +9,6 @@ namespace UniState
         UniTask Initialize(CancellationToken token);
         UniTask<StateTransitionInfo> Execute(CancellationToken token);
         UniTask Exit(CancellationToken token);
+        void Tick(float deltaTime);
     }
 }

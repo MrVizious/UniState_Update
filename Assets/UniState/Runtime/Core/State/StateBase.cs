@@ -35,6 +35,11 @@ namespace UniState
             Payload = payload;
         }
 
+        public virtual void Tick(float deltaTime)
+        {
+            // NO OP
+        }
+
         public virtual void SetTransitionFacade(IStateTransitionFacade transitionFacade) => Transition = transitionFacade;
 
         public virtual void Dispose()

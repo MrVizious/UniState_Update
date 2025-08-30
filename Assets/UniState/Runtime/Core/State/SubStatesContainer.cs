@@ -54,5 +54,7 @@ namespace UniState
             UniTask.WhenAll(List.Select(s => s.Exit(token)).ToArray());
 
         public void Dispose() => _subStates.ForEach(s => s.Dispose());
+
+        public virtual void Tick(float deltaTime) { /* NOOP*/}
     }
 }
