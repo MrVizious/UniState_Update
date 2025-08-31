@@ -13,6 +13,11 @@ namespace Examples.Infrastructure.VContainer
 
             builder.RegisterStateMachine<IStateMachine, StateMachine>();
 
+            builder.RegisterState<ExampleTickableState>();
+
+            builder.RegisterState<EnterState>();
+            builder.RegisterState<LoopState>();
+
             builder.RegisterState<StartGameState>();
             builder.RegisterState<RollDiceState>();
             builder.RegisterState<LostState>();
