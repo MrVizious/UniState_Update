@@ -36,10 +36,8 @@ public abstract class TickableState<TPayload> : StateBase<TPayload>
 
     public sealed override async UniTask<StateTransitionInfo> Execute(CancellationToken token)
     {
-        Debug.Log($"Starting execution on {this.GetType().Name}");
         bool hasAsyncExecution = IsAsyncExecutionOverridden();
         bool hasTickMethods = IsAnyTickMethodOverridden();
-        Debug.Log($"Has AsyncExecution: {hasAsyncExecution}, Has TickMethods: {hasTickMethods}");
 
         if (!hasAsyncExecution && !hasTickMethods)
         {
@@ -47,26 +45,21 @@ public abstract class TickableState<TPayload> : StateBase<TPayload>
                 $"State {GetType().Name} must override either AsyncExecution or at least one Tick method");
         }
 
-        Debug.Log($"Creating cancellation token source on {this.GetType().Name}");
         using var localCts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
         try
         {
 
-            Debug.Log($"Creating Loop on {this.GetType().Name}");
             UniTask<StateTransitionInfo> loop = hasTickMethods
                 ? TickLoop(localCts.Token)
                 : UniTask.FromResult<StateTransitionInfo>(null);
 
-            Debug.Log($"Creating Enter on {this.GetType().Name}");
             UniTask<StateTransitionInfo> enter = hasAsyncExecution
                 ? AsyncExecution(localCts.Token)
                 : UniTask.FromResult<StateTransitionInfo>(null);
 
 
-            Debug.Log($"Launching Enter AND Loop on {this.GetType().Name}");
             var (completed, result1, result2) = await UniTask.WhenAny(loop, enter);
-            Debug.Log($"Finished Enter OR Loop on {this.GetType().Name}");
 
             localCts.Cancel();
 
