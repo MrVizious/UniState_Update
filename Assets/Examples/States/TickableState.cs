@@ -13,25 +13,12 @@ public abstract class TickableState<TPayload> : StateBase<TPayload>
 {
     private bool IsAsyncExecutionOverridden()
     {
-        var method = GetType().GetMethod(
-            nameof(AsyncExecution),
-            System.Reflection.BindingFlags.Instance |
-            System.Reflection.BindingFlags.Public |
-            System.Reflection.BindingFlags.DeclaredOnly
-        );
-        return method != null;
+        return _isAsyncExecutionOverriden;
     }
 
     private bool IsAnyTickMethodOverridden()
     {
-        var flags = System.Reflection.BindingFlags.Instance |
-                    System.Reflection.BindingFlags.Public |
-                    System.Reflection.BindingFlags.DeclaredOnly;
-
-        return GetType().GetMethod(nameof(EarlyTick), flags) != null ||
-               GetType().GetMethod(nameof(Tick), flags) != null ||
-               GetType().GetMethod(nameof(PreLateTick), flags) != null ||
-               GetType().GetMethod(nameof(PostLateTick), flags) != null;
+        return _isEarlyTickOverriden || _isTickOverriden || _isPreLateTickOverriden || _isPostLateTickOverriden;
     }
 
     public sealed override async UniTask<StateTransitionInfo> Execute(CancellationToken token)
@@ -105,29 +92,34 @@ public abstract class TickableState<TPayload> : StateBase<TPayload>
         return null;
     }
 
-    public virtual async UniTask<StateTransitionInfo> AsyncExecution(CancellationToken token) => null;
+    public virtual async UniTask<StateTransitionInfo> AsyncExecution(CancellationToken token) { _isAsyncExecutionOverriden = false; return null; }
+    protected bool _isAsyncExecutionOverriden = true;
 
     /// <summary>
     /// Executes on Unity's player loop, before Early Update
     /// </summary>
     /// <returns>Null if not ended, <seealso cref="StateTransitionInfo"/> if not null</returns>
-    public virtual StateTransitionInfo EarlyTick() => null;
+    public virtual StateTransitionInfo EarlyTick() { _isEarlyTickOverriden = false; return null; }
+    protected bool _isEarlyTickOverriden = true;
 
     /// <summary>
     /// Executes on Unity's player loop, before Update
     /// </summary>
     /// <returns>Null if not ended, <seealso cref="StateTransitionInfo"/> if not null</returns>
-    public virtual StateTransitionInfo Tick() => null;
+    public virtual StateTransitionInfo Tick() { _isTickOverriden = false; return null; }
+    protected bool _isTickOverriden = true;
 
     /// <summary>
     /// Executes on Unity's player loop, before Late Update
     /// </summary>
     /// <returns>Null if not ended, <seealso cref="StateTransitionInfo"/> if not null</returns>
-    public virtual StateTransitionInfo PreLateTick() => null;
+    public virtual StateTransitionInfo PreLateTick() { _isPreLateTickOverriden = false; return null; }
+    protected bool _isPreLateTickOverriden = true;
 
     /// <summary>
     /// Executes on Unity's player loop, after Late Update
     /// </summary>
     /// <returns>Null if not ended, <seealso cref="StateTransitionInfo"/> if not null</returns>
-    public virtual StateTransitionInfo PostLateTick() => null;
+    public virtual StateTransitionInfo PostLateTick() { _isPostLateTickOverriden = false; return null; }
+    protected bool _isPostLateTickOverriden = true;
 }
